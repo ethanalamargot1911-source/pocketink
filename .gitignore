@@ -1,0 +1,17 @@
+# Build results
+bin/
+obj/
+out/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local-machine Claude Code settings (permissions allowlist etc.) - not meant to be shared
+.claude/settings.local.json
