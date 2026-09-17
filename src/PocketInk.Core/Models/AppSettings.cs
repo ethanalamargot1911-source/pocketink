@@ -45,4 +45,16 @@ public sealed class AppSettings
     /// as query parameters.
     /// </summary>
     public string? RemoteClientBaseUrl { get; set; }
+
+    /// <summary>
+    /// Optional TURN/STUN relay for Remote mode's WebRTC connections, needed when two devices on
+    /// different networks can't reach each other with plain ICE (the common case across real
+    /// home/mobile NATs). Semicolon-separated so more than one URL (e.g. UDP and TCP/443 variants
+    /// for restrictive firewalls) can share the same username/credential, matching how TURN
+    /// providers like Metered's Open Relay hand out credentials. Local mode never needs this - same-LAN
+    /// host candidates always work - so leaving these blank doesn't affect it.
+    /// </summary>
+    public string? TurnServerUrls { get; set; }
+    public string? TurnUsername { get; set; }
+    public string? TurnCredential { get; set; }
 }

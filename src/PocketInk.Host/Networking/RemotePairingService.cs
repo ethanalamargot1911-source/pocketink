@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using PocketInk.Host.Rtc;
 using PocketInk.Host.Services;
 using QRCoder;
 
@@ -74,7 +75,19 @@ public sealed class RemotePairingService
         var baseUrl = _services.Settings.RemoteClientBaseUrl!.TrimEnd('/');
         var supabaseUrl = Uri.EscapeDataString(_services.Settings.SupabaseUrl!);
         var supabaseKey = Uri.EscapeDataString(_services.Settings.SupabaseAnonKey!);
-        return $"{baseUrl}/?connect={pairingCode}&su={supabaseUrl}&sk={supabaseKey}";
+        var url = $"{baseUrl}/?connect={pairingCode}&su={supabaseUrl}&sk={supabaseKey}";
+
+        // TURN is optional (Phase 4) - the phone can still attempt a direct connection without it,
+        // just with lower odds of success across two arbitrary networks. Only add these params when
+        // configured, so a Remote link made before TURN is set up isn't cluttered with empty ones.
+        if (!string.IsNullOrWhiteSpace(_services.Settings.TurnServerUrls))
+        {
+            url += $"&tu={Uri.EscapeDataString(_services.Settings.TurnServerUrls)}";
+            url += $"&tn={Uri.EscapeDataString(_services.Settings.TurnUsername ?? "")}";
+            url += $"&tc={Uri.EscapeDataString(_services.Settings.TurnCredential ?? "")}";
+        }
+
+        return url;
     }
 
     public byte[] GeneratePairingQrPng(string pairingCode)
@@ -105,7 +118,8 @@ public sealed class RemotePairingService
         try
         {
             var controlChannel = await attempt.Session.ConnectAsync(
-                _services.Settings.SupabaseUrl!, _services.Settings.SupabaseAnonKey!, attempt.Cts.Token);
+                _services.Settings.SupabaseUrl!, _services.Settings.SupabaseAnonKey!,
+                IceServerConfig.Build(_services.Settings), attempt.Cts.Token);
             var sessionHandler = new PenSessionHandler(_services);
             await sessionHandler.HandleAsync(new DataChannelControlChannel(controlChannel), attempt.Cts.Token);
         }

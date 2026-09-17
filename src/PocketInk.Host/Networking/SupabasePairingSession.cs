@@ -51,7 +51,7 @@ public sealed class SupabasePairingSession : IAsyncDisposable
     /// there (typically via <see cref="PenSessionHandler.HandleAsync(IControlChannel, CancellationToken)"/>);
     /// this session keeps the underlying <see cref="RTCPeerConnection"/> alive until <see cref="DisposeAsync"/>.
     /// </summary>
-    public async Task<RTCDataChannel> ConnectAsync(string supabaseUrl, string supabaseAnonKey, CancellationToken ct)
+    public async Task<RTCDataChannel> ConnectAsync(string supabaseUrl, string supabaseAnonKey, RTCConfiguration? iceConfig, CancellationToken ct)
     {
         var client = new Client(supabaseUrl, supabaseAnonKey, new SupabaseOptions { AutoConnectRealtime = true });
         await client.InitializeAsync();
@@ -62,7 +62,7 @@ public sealed class SupabasePairingSession : IAsyncDisposable
         var broadcast = channel.Register<SignalRelayBroadcast>(broadcastSelf: false, broadcastAck: true);
         _broadcast = broadcast;
 
-        var pc = new RTCPeerConnection();
+        var pc = iceConfig is not null ? new RTCPeerConnection(iceConfig) : new RTCPeerConnection();
         _peerConnection = pc;
         var dataChannelTcs = new TaskCompletionSource<RTCDataChannel>(TaskCreationOptions.RunContinuationsAsynchronously);
 

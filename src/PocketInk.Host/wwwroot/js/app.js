@@ -34,7 +34,17 @@
         bootstrapPeerConnection: null,
         remoteControlChannel: null,
         remoteSignalChannel: null,
+        // Parsed from the Remote pairing URL (see connectRemote) - null in Local mode, where
+        // same-LAN host candidates always work and no TURN relay is ever needed.
+        iceServers: null,
     };
+
+    /** Builds an RTCPeerConnection using state.iceServers when Remote mode set one, exactly like
+     *  Local mode's plain `new RTCPeerConnection()` when it didn't (state.iceServers stays null
+     *  for the entire lifetime of a Local-mode page load, so this is a no-op there). */
+    function createPeerConnection() {
+        return state.iceServers ? new RTCPeerConnection({ iceServers: state.iceServers }) : new RTCPeerConnection();
+    }
 
     function nextSequence() {
         state.sequence = (state.sequence + 1) >>> 0;
@@ -360,7 +370,7 @@
         });
         state.remoteSignalChannel = channel;
 
-        var pc = new RTCPeerConnection();
+        var pc = createPeerConnection();
         state.bootstrapPeerConnection = pc;
 
         pc.onicecandidate = function (event) {
@@ -460,7 +470,7 @@
             return;
         }
 
-        var pc = new RTCPeerConnection();
+        var pc = createPeerConnection();
         state.peerConnection = pc;
 
         pc.ontrack = function (event) {
@@ -841,10 +851,25 @@
         if (connectCode) {
             var supabaseUrl = url.searchParams.get("su");
             var supabaseKey = url.searchParams.get("sk");
+            var turnUrls = url.searchParams.get("tu");
+            var turnUsername = url.searchParams.get("tn");
+            var turnCredential = url.searchParams.get("tc");
             url.searchParams.delete("connect");
             url.searchParams.delete("su");
             url.searchParams.delete("sk");
+            url.searchParams.delete("tu");
+            url.searchParams.delete("tn");
+            url.searchParams.delete("tc");
             window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
+
+            // Optional (Phase 4): absent when the host hasn't configured a TURN server yet, in
+            // which case createPeerConnection() falls back to plain ICE with no relay, same as
+            // Local mode always has.
+            if (turnUrls) {
+                state.iceServers = turnUrls.split(";").filter(Boolean).map(function (turnUrl) {
+                    return { urls: turnUrl, username: turnUsername || "", credential: turnCredential || "" };
+                });
+            }
 
             hideMessage();
             await loadTabletArea();

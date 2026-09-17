@@ -45,7 +45,16 @@
                     <TextBox x:Name="SupabaseAnonKeyTextBox" Margin="0,0,0,8" LostFocus="RemoteSettingsTextBox_LostFocus" />
 
                     <TextBlock Text="Remote client URL (e.g. GitHub Pages)" Margin="0,0,0,2" />
-                    <TextBox x:Name="RemoteClientBaseUrlTextBox" LostFocus="RemoteSettingsTextBox_LostFocus" />
+                    <TextBox x:Name="RemoteClientBaseUrlTextBox" Margin="0,0,0,8" LostFocus="RemoteSettingsTextBox_LostFocus" />
+
+                    <TextBlock Text="TURN server URL(s) - semicolon-separated, optional but recommended" Margin="0,0,0,2" TextWrapping="Wrap" />
+                    <TextBox x:Name="TurnServerUrlsTextBox" Margin="0,0,0,8" LostFocus="RemoteSettingsTextBox_LostFocus" />
+
+                    <TextBlock Text="TURN username" Margin="0,0,0,2" />
+                    <TextBox x:Name="TurnUsernameTextBox" Margin="0,0,0,8" LostFocus="RemoteSettingsTextBox_LostFocus" />
+
+                    <TextBlock Text="TURN credential" Margin="0,0,0,2" />
+                    <TextBox x:Name="TurnCredentialTextBox" LostFocus="RemoteSettingsTextBox_LostFocus" />
                 </StackPanel>
             </GroupBox>
 

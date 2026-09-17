@@ -70,7 +70,8 @@ public sealed class ScreenMirrorSession : IAsyncDisposable
         // moved to a known position and visually verified it appears) before relying on it here.
         screenSource.InitialiseDecoder(new Dictionary<string, string> { ["draw_mouse"] = "1" });
 
-        var pc = new RTCPeerConnection();
+        var iceConfig = IceServerConfig.Build(_services.Settings);
+        var pc = iceConfig is not null ? new RTCPeerConnection(iceConfig) : new RTCPeerConnection();
 
         pc.onicecandidate += candidate =>
         {

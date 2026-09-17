@@ -123,6 +123,9 @@ public partial class MainWindow : Window
         SupabaseUrlTextBox.Text = App.Host.Settings.SupabaseUrl ?? "";
         SupabaseAnonKeyTextBox.Text = App.Host.Settings.SupabaseAnonKey ?? "";
         RemoteClientBaseUrlTextBox.Text = App.Host.Settings.RemoteClientBaseUrl ?? "";
+        TurnServerUrlsTextBox.Text = App.Host.Settings.TurnServerUrls ?? "";
+        TurnUsernameTextBox.Text = App.Host.Settings.TurnUsername ?? "";
+        TurnCredentialTextBox.Text = App.Host.Settings.TurnCredential ?? "";
         _isPopulatingSettingsUi = false;
     }
 
@@ -136,6 +139,9 @@ public partial class MainWindow : Window
         App.Host.Settings.SupabaseUrl = NullIfEmpty(SupabaseUrlTextBox.Text);
         App.Host.Settings.SupabaseAnonKey = NullIfEmpty(SupabaseAnonKeyTextBox.Text);
         App.Host.Settings.RemoteClientBaseUrl = NullIfEmpty(RemoteClientBaseUrlTextBox.Text);
+        App.Host.Settings.TurnServerUrls = NullIfEmpty(TurnServerUrlsTextBox.Text);
+        App.Host.Settings.TurnUsername = NullIfEmpty(TurnUsernameTextBox.Text);
+        App.Host.Settings.TurnCredential = NullIfEmpty(TurnCredentialTextBox.Text);
         App.PersistSettings();
     }
 
