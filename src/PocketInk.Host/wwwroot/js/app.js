@@ -393,11 +393,25 @@
             attachRemoteControlChannel(event.channel);
         };
 
+        // Handled strictly one at a time: an ICE candidate that arrives while the offer is still
+        // being applied would otherwise hit addIceCandidate before a remote description exists.
+        var signalQueue = Promise.resolve();
         channel.on("broadcast", { event: "signal" }, function (message) {
-            handleRemoteSignal(pc, channel, message.payload || {});
+            signalQueue = signalQueue.then(function () {
+                return handleRemoteSignal(pc, channel, message.payload || {});
+            }).catch(function () { /* one bad signal must not stall the queue */ });
         });
 
-        channel.subscribe();
+        // Broadcast isn't stored, so the host can only send its offer once we're actually listening -
+        // "ready" is what tells it to.
+        channel.subscribe(function (status) {
+            if (status === "SUBSCRIBED") {
+                sendRemoteSignal(channel, { kind: "ready" });
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                showMessage("Could not reach the pairing service (" + status + "). Check your connection and rescan.");
+                setStatus("Not paired");
+            }
+        });
     }
 
     function handleServerMessage(event) {

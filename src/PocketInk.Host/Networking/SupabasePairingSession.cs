@@ -64,6 +64,21 @@ public sealed class SupabasePairingSession : IAsyncDisposable
 
         var pc = iceConfig is not null ? new RTCPeerConnection(iceConfig) : new RTCPeerConnection();
         _peerConnection = pc;
+        var offerSent = 0;
+
+        async Task SendOfferAsync()
+        {
+            try
+            {
+                var offer = pc.createOffer(new RTCOfferOptions());
+                await pc.setLocalDescription(offer);
+                await SendSignalAsync(new SignalRelayPayload { Kind = "offer", Sdp = offer.sdp, SdpType = "offer" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create/send the WebRTC offer.");
+            }
+        }
         var dataChannelTcs = new TaskCompletionSource<RTCDataChannel>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         pc.onicecandidate += candidate =>
@@ -99,6 +114,15 @@ public sealed class SupabasePairingSession : IAsyncDisposable
 
             switch (payload.Kind)
             {
+                case "ready":
+                    // Broadcast isn't stored: an offer sent before the phone subscribed is lost for
+                    // good, so the offer is only created once the phone says it's listening.
+                    if (Interlocked.Exchange(ref offerSent, 1) == 0)
+                    {
+                        _ = SendOfferAsync();
+                    }
+                    break;
+
                 case "answer":
                     pc.setRemoteDescription(new RTCSessionDescriptionInit { type = RTCSdpType.answer, sdp = payload.Sdp });
                     break;
@@ -122,10 +146,6 @@ public sealed class SupabasePairingSession : IAsyncDisposable
         controlChannel.onopen += () => dataChannelTcs.TrySetResult(controlChannel);
 
         await channel.Subscribe();
-
-        var offer = pc.createOffer(new RTCOfferOptions());
-        await pc.setLocalDescription(offer);
-        await SendSignalAsync(new SignalRelayPayload { Kind = "offer", Sdp = offer.sdp, SdpType = "offer" });
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeoutCts.CancelAfter(ConnectTimeout);
